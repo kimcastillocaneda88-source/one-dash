@@ -1,0 +1,34 @@
+{
+  "buildCommand": "pnpm build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "env": {
+    "VITE_FIREBASE_API_KEY": {
+      "description": "Firebase API Key"
+    },
+    "VITE_FIREBASE_AUTH_DOMAIN": {
+      "description": "Firebase Auth Domain"
+    },
+    "VITE_FIREBASE_PROJECT_ID": {
+      "description": "Firebase Project ID"
+    },
+    "VITE_FIREBASE_STORAGE_BUCKET": {
+      "description": "Firebase Storage Bucket"
+    },
+    "VITE_FIREBASE_MESSAGING_SENDER_ID": {
+      "description": "Firebase Messaging Sender ID"
+    },
+    "VITE_FIREBASE_APP_ID": {
+      "description": "Firebase App ID"
+    },
+    "VITE_FIREBASE_MEASUREMENT_ID": {
+      "description": "Firebase Measurement ID (optional)"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions for role-based access control
+    function isAdmin() {
+      return request.auth != null && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin';
+    }
+    
+    function isTeamLeader() {
+      return request.auth != null && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'TeamLeader';
+    }
+    
+    function isMember() {
+      return request.auth != null && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Member';
+    }
+    
+    function isTeamMember(teamId) {
+      return request.auth != null && 
+             exists(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid));
+    }
+    
+    function isTeamLeaderOf(teamId) {
+      return request.auth != null && 
+             get(/databases/$(database)/documents/teams/$(teamId)).data.leaderId == request.auth.uid;
+    }
+    
+    // Users collection - only admins can read all, users can read their own
+    match /users/{userId} {
+      allow read: if request.auth.uid == userId || isAdmin();
+      allow write: if request.auth.uid == userId || isAdmin();
+      allow create: if request.auth.uid == userId;
+    }
+    
+    // Teams collection - admins see all, members see only their teams
+    match /teams/{teamId} {
+      allow read: if isAdmin() || isTeamMember(teamId);
+      allow write: if isAdmin() || isTeamLeaderOf(teamId);
+      allow create: if isAdmin();
+      allow delete: if isAdmin();
+      
+      // Team members subcollection
+      match /members/{userId} {
+        allow read: if isAdmin() || isTeamMember(teamId);
+        allow write: if isAdmin() || isTeamLeaderOf(teamId);
+      }
+      
+      // Team metrics subcollection
+      match /metrics/{metricId} {
+        allow read: if isAdmin() || isTeamMember(teamId);
+        allow write: if isAdmin();
+        allow create: if false; // Only Cloud Functions can create
+      }
+    }
+    
+    // Metrics collection (aggregated hourly)
+    match /metrics/{metricId} {
+      allow read: if isAdmin() || 
+                     (isTeamMember(resource.data.teamId));
+      allow write: if isAdmin();
+      allow create: if false; // Only Cloud Functions can create
+    }
+    
+    // Audit logs - only admins can read, system can write
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow write: if request.auth.token.firebase.sign_in_provider == 'system';
+      allow create: if false;
+    }
+    
+    // Real-time metrics (raw data for live updates)
+    match /realtimeMetrics/{teamId}/{metricId} {
+      allow read: if isAdmin() || isTeamMember(teamId);
+      allow write: if isAdmin();
+      allow create: if false; // Only Cloud Functions can create
+    }
+  }
+}

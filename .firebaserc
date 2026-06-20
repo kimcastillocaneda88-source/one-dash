@@ -1,0 +1,12 @@
+{
+  "projects": {
+    "default": "one-dash-a7cf5"
+  },
+  "targets": {
+    "one-dash-a7cf5": {
+      "hosting": {
+        "dashboard": ["one-dash"]
+      }
+    }
+  }
+}
